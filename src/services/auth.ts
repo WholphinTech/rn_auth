@@ -32,7 +32,7 @@ export async function requireAuth(promptMessage = 'Authenticate to proceed'): Pr
       promptMessage,
       fallbackLabel: 'Use device passcode',
       disableDeviceFallback: false,
-      // We intentionally do not use ephemeral keys here; this is a simple gate
+     
     });
     return !!result.success;
   } catch (err) {

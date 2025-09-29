@@ -1,8 +1,9 @@
 import React from "react";
-import { Text, StyleSheet, TouchableOpacity, Button } from "react-native";
-import { Todo } from "../types";
-import { useTodoDispatch } from "../context/TodoContext";
-import { requireAuth } from "../services/auth";
+import { Text,  TouchableOpacity, Button } from "react-native";
+import { Todo } from "../../types";
+import { useTodoDispatch } from "../../context/TodoContext";
+import { requireAuth } from "../../services/auth";
+import { styles } from "./TodoItem.styles";
 
 export default function TodoItem({
   todo,
@@ -28,18 +29,3 @@ export default function TodoItem({
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 8,
-    borderWidth: 1,
-    borderColor: "#a19e9eff",
-    borderRadius: 6,
-  },
-
-  titleContainer: { flex: 1 },
-  title: { fontSize: 16, fontWeight: "700" },
-});
