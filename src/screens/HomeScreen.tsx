@@ -22,17 +22,17 @@ import * as IntentLauncher from "expo-intent-launcher";
 export default function HomeScreen() {
   const { todos, loaded } = useTodoState();
 
-
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [deviceSecured, setDeviceSecured] = useState<boolean | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
 
-
   const checkAuth = async () => {
     try {
       const enrolled = await LocalAuthentication.isEnrolledAsync();
+      const hasHardware = await LocalAuthentication.hasHardwareAsync();
       setDeviceSecured(enrolled);
-
+      console.log("hasHardware", hasHardware);
+      console.log("enrolled", enrolled);
       if (enrolled) {
         const result = await LocalAuthentication.authenticateAsync({
           promptMessage: "Unlock to access your todos",
@@ -48,7 +48,7 @@ export default function HomeScreen() {
       setAuthenticated(false);
     }
   };
-console.log("authenticated", authenticated)
+  console.log("authenticated", authenticated);
   useEffect(() => {
     checkAuth();
 
@@ -109,7 +109,6 @@ console.log("authenticated", authenticated)
           clearEditing={() => setEditingTodo(null)}
         />
 
-  
         {deviceSecured === false && (
           <View style={{ marginTop: 20 }}>
             <Text>Please set device authentication to use the app fully:</Text>

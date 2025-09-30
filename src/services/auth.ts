@@ -6,7 +6,7 @@
  *  - isBiometricAvailable(): boolean
  */
 
-import * as LocalAuthentication from 'expo-local-authentication';
+import * as LocalAuthentication from "expo-local-authentication";
 
 /**
  * Check if biometric (or device) authentication is possible and enrolled.
@@ -17,7 +17,7 @@ export async function isBiometricAvailable(): Promise<boolean> {
     const isEnrolled = await LocalAuthentication.isEnrolledAsync();
     return !!(hasHardware && isEnrolled);
   } catch (err) {
-    console.warn('isBiometricAvailable error', err);
+    console.warn("isBiometricAvailable error", err);
     return false;
   }
 }
@@ -26,17 +26,18 @@ export async function isBiometricAvailable(): Promise<boolean> {
  * Request authentication. Returns true if authenticated.
  * Caller should handle the UI for failure (e.g. show toast).
  */
-export async function requireAuth(promptMessage = 'Authenticate to proceed'): Promise<boolean> {
+export async function requireAuth(
+  promptMessage = "Authenticate to proceed"
+): Promise<boolean> {
   try {
     const result = await LocalAuthentication.authenticateAsync({
       promptMessage,
-      fallbackLabel: 'Use device passcode',
+      fallbackLabel: "Use device passcode",
       disableDeviceFallback: false,
-     
     });
     return !!result.success;
   } catch (err) {
-    console.warn('Authentication error', err);
+    console.warn("Authentication error", err);
     return false;
   }
 }
