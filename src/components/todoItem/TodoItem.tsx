@@ -1,5 +1,5 @@
 import React from "react";
-import { Text,  TouchableOpacity, Button } from "react-native";
+import { Text, TouchableOpacity, Button } from "react-native";
 import { Todo } from "../../types";
 import { useTodoDispatch } from "../../context/TodoContext";
 import { requireAuth } from "../../services/auth";

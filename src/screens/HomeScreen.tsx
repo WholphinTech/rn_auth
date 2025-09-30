@@ -77,11 +77,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-    >
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={"padding"}>
       <View style={styles.container}>
         {/* {biometricAvailable === false && (
           <View style={styles.warning}>
