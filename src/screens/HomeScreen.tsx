@@ -3,62 +3,68 @@ import {
   View,
   Text,
   FlatList,
-  ActivityIndicator,
   Platform,
   KeyboardAvoidingView,
   Button,
   Linking,
-  AppState,
 } from "react-native";
 import AddTodo from "../components/addTodo/AddTodo";
 import TodoItem from "../components/todoItem/TodoItem";
 import { useTodoState } from "../context/TodoContext";
-import { isBiometricAvailable } from "../services/auth";
 import { Todo } from "../types";
 import { styles } from "./HomeScreen.styles";
 import * as LocalAuthentication from "expo-local-authentication";
 import * as IntentLauncher from "expo-intent-launcher";
 
+/** Persist for this app process (prevents re-prompt after remounts) */
+let SESSION_PROMPTED = false;
+let SESSION_AUTHENTICATED = false;
+
 export default function HomeScreen() {
-  const { todos, loaded } = useTodoState();
+  const { todos } = useTodoState();
 
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
-  const [deviceSecured, setDeviceSecured] = useState<boolean | null>(null);
-  const [authenticated, setAuthenticated] = useState(false);
+  const [authenticated, setAuthenticated] = useState<boolean>(
+    SESSION_AUTHENTICATED
+  );
+  const [needsSetup, setNeedsSetup] = useState(false); // show button when user skipped / no lock
 
-  const checkAuth = async () => {
+  const runInitialAuthOnce = async () => {
+    if (SESSION_PROMPTED) {
+      setAuthenticated(SESSION_AUTHENTICATED);
+      return;
+    }
+    SESSION_PROMPTED = true;
+
     try {
-      const enrolled = await LocalAuthentication.isEnrolledAsync();
-      const hasHardware = await LocalAuthentication.hasHardwareAsync();
-      setDeviceSecured(enrolled);
-      console.log("hasHardware", hasHardware);
-      console.log("enrolled", enrolled);
-      if (enrolled) {
-        const result = await LocalAuthentication.authenticateAsync({
-          promptMessage: "Unlock to access your todos",
-          fallbackLabel: "Enter PIN/Password",
-          cancelLabel: "Cancel",
-        });
-        setAuthenticated(result.success);
+      const result = await LocalAuthentication.authenticateAsync({
+        promptMessage: "Unlock to access your todos",
+        fallbackLabel: "Enter PIN/Password",
+        cancelLabel: "Cancel",
+        disableDeviceFallback: false as any,
+      });
+
+      if (result.success) {
+        SESSION_AUTHENTICATED = true;
+        setAuthenticated(true);
+        setNeedsSetup(false);
       } else {
+        SESSION_AUTHENTICATED = false;
         setAuthenticated(false);
+        setNeedsSetup(
+          result.error === "not_enrolled" || result.error === "not_available"
+        );
       }
-    } catch (err) {
-      console.warn("Authentication failed", err);
+    } catch (e) {
+      console.warn("Authentication failed", e);
+      SESSION_AUTHENTICATED = false;
       setAuthenticated(false);
+      setNeedsSetup(true);
     }
   };
-  console.log("authenticated", authenticated);
+
   useEffect(() => {
-    checkAuth();
-
-    const subscription = AppState.addEventListener("change", (state) => {
-      if (state === "active") {
-        checkAuth();
-      }
-    });
-
-    return () => subscription.remove();
+    runInitialAuthOnce();
   }, []);
 
   const goToSettings = async () => {
@@ -76,17 +82,32 @@ export default function HomeScreen() {
     }
   };
 
+  // NEW: Logout / Lock app
+  const lockApp = () => {
+    SESSION_PROMPTED = false; // allow prompting again
+    SESSION_AUTHENTICATED = false; // reset session auth
+    setAuthenticated(false);
+    // don't auto-prompt; let user choose "Unlock now"
+  };
+
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={"padding"}>
       <View style={styles.container}>
-        {/* {biometricAvailable === false && (
-          <View style={styles.warning}>
-            <Text style={{ color: "#fff" }}>
-              Biometric/device authentication is not set up on this device.
-              Add/Edit/Delete operations will be blocked.
-            </Text>
-          </View>
-        )} */}
+        {/* Top row: Lock/Unlock controls */}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "flex-end",
+            gap: 12,
+            marginBottom: 8,
+          }}
+        >
+          {authenticated ? (
+            <Button title="Lock app (Logout)" onPress={lockApp} />
+          ) : (
+            <Button title="Unlock now" onPress={runInitialAuthOnce} />
+          )}
+        </View>
 
         <FlatList
           data={todos}
@@ -103,9 +124,11 @@ export default function HomeScreen() {
         <AddTodo
           editingTodo={editingTodo}
           clearEditing={() => setEditingTodo(null)}
+          authenticated={authenticated}
         />
 
-        {deviceSecured === false && (
+        {/* Show only when user didn't unlock or no lock set */}
+        {!authenticated && needsSetup && (
           <View style={{ marginTop: 20 }}>
             <Text>Please set device authentication to use the app fully:</Text>
             <Button title="Go to Settings" onPress={goToSettings} />

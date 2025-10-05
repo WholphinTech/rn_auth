@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { View, TextInput, Button, Alert } from "react-native";
 import { useTodoDispatch } from "../../context/TodoContext";
-import { requireAuth } from "../../services/auth";
 import { Todo } from "../../types";
 import { styles } from "./AddTodo.styles";
 
 export default function AddTodo({
   editingTodo,
   clearEditing,
+  authenticated,
 }: {
   editingTodo: Todo | null;
   clearEditing: () => void;
+  authenticated: boolean;
 }) {
   const [text, setText] = useState(editingTodo?.title ?? "");
   const dispatch = useTodoDispatch();
@@ -26,13 +27,10 @@ export default function AddTodo({
       return;
     }
 
-    const ok = await requireAuth(
-      editingTodo ? "Authenticate to update TODO" : "Authenticate to add TODO"
-    );
-    if (!ok) {
+    if (!authenticated) {
       Alert.alert(
-        "Authentication failed",
-        "You need biometric authentication to add todos."
+        "Not authenticated",
+        "Please unlock the app before adding/updating todos."
       );
       return;
     }
